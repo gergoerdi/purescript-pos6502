@@ -17,9 +17,6 @@ import Control.Monad.Reader
 
 import Data.Lens
 
-foo :: String
-foo = "Hello POS6502"
-
 type Addr = Word16
 
 class (MonadEffect m) <= MonadMachine m where
@@ -143,6 +140,14 @@ xor a b = (a .|. b) .&. not (a .&. b)
 
 statusFlag :: Int -> Lens' Word8 Boolean
 statusFlag i = lens (testBit i) (setBit i)
+
+hex :: forall a. Integral a => Int -> a -> String
+hex n = pad n <<< toStringAs hexadecimal <<< fromIntegral
+  where
+    pad :: Int -> String -> String
+    pad n s = "0x" <> joinWith "" (replicate k "0") <> s
+      where
+        k = max 0 $ n - length s
 
 step :: forall m. MonadMachine m => Partial => ReaderT CPU m Unit
 step = fetch >>= \op -> case fromIntegral op of -- http://www.6502.org/tutorials/6502opcodes.html
