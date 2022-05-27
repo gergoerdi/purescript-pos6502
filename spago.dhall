@@ -4,6 +4,7 @@
   , "effect"
   , "integers"
   , "numerics"
+  , "partial"
   , "prelude"
   , "profunctor-lenses"
   , "refs"

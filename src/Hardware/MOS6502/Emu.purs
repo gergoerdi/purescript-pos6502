@@ -16,6 +16,7 @@ import Effect.Class (class MonadEffect, liftEffect)
 import Control.Monad.Reader
 
 import Data.Lens
+import Partial
 
 type Addr = Word16
 
@@ -36,8 +37,8 @@ type CPU =
     , pc :: Ref Addr
     }
 
-new :: Addr -> Effect CPU
-new pc0 = do
+new :: forall m. MonadEffect m => Addr -> m CPU
+new pc0 = liftEffect do
     regA <- Ref.new <<< fromIntegral $ 0x00
     regX <- Ref.new <<< fromIntegral $ 0x00
     regY <- Ref.new <<< fromIntegral $ 0x00
@@ -331,6 +332,11 @@ step = fetch >>= \op -> case fromIntegral op of -- http://www.6502.org/tutorials
     0x68 -> setReg _.regA =<< pop
     0x08 -> push <<< (\v -> setBit 4 v true) =<< getReg _.status
     0x28 -> setReg _.status =<< pop
+
+    op -> do
+        pc <- getReg _.pc
+        let addr = pc - fromIntegral 1
+        crashWith $ hex 4 addr <> " " <> hex 2 op
   where
     byVal addressing op = do
         addr <- addressing
@@ -451,7 +457,8 @@ step = fetch >>= \op -> case fromIntegral op of -- http://www.6502.org/tutorials
         offset <- fromIntegral <$> fetch
         b <- getFlag flag
         when (b == target) do
-            modifyReg _.pc (_ + offset)
+            modifyReg _.pc $ if offset < 0x80 then (\pc -> pc + fromIntegral offset) 
+                else (\pc -> pc + fromIntegral offset - fromIntegral 256)
 
     dec = alu (_ - fromIntegral 1)
     inc = alu (_ + fromIntegral 1)
