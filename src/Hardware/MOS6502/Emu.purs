@@ -13,7 +13,9 @@ import Effect (Effect)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
 import Effect.Class (class MonadEffect, liftEffect)
-import Control.Monad.Reader
+import Control.Monad.Reader.Class
+import Control.Monad.Trans.Class
+import Uncurried.ReaderT
 
 import Data.Lens
 import Partial
